@@ -1,118 +1,123 @@
 import streamlit as st
+from streamlit_gsheets import GSheetsConnection
+import pandas as pd
+from datetime import datetime
 
 # --- 1. KONFIGURASI HALAMAN ---
 st.set_page_config(
-    page_title="Neuro Nada - Daily Workflow", 
+    page_title="Neuro Nada - Daily Journal", 
     page_icon="🌱", 
     layout="wide"
 )
 
-# --- 2. CSS CUSTOM (Estetika Adem/Sage Green) ---
+# --- 2. KONEKSI DATABASE (Google Sheets) ---
+# Pastikan URL Spreadsheet lo sudah ada di Secrets Streamlit Cloud
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+# --- 3. CSS CUSTOM (Estetika Sage Green) ---
 st.markdown("""
     <style>
     .stApp { background-color: #f0f7f4; color: #2d4035; }
-    .stButton>button { background-color: #9CAF88; color: white; border-radius: 8px; border: none; padding: 10px 24px; font-weight: bold; }
+    .stButton>button { 
+        background-color: #9CAF88; 
+        color: white; 
+        border-radius: 8px; 
+        border: none; 
+        padding: 10px 24px; 
+        font-weight: bold; 
+        width: 100%;
+    }
     .stButton>button:hover { background-color: #7b8f6b; }
-    .nero-box { background-color: white; padding: 20px; border-radius: 15px; border-left: 5px solid #ffb703; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 25px; font-size: 1.1em; }
-    .header-title { color: #1D3557; font-family: sans-serif; font-weight: 700; }
+    .nero-box { 
+        background-color: white; 
+        padding: 20px; 
+        border-radius: 15px; 
+        border-left: 5px solid #ffb703; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+        margin-bottom: 25px; 
+    }
     .sub-header { color: #9CAF88; font-weight: bold; border-bottom: 2px solid #9CAF88; padding-bottom: 10px; margin-bottom: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. SISTEM LOGIN (Email-Based Signup) ---
+# --- 4. SISTEM LOGIN ---
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
     st.session_state['user_email'] = ""
 
 if not st.session_state['logged_in']:
-    st.markdown("<h1 class='header-title'>🌱 Neuro Nada Daily Workflow</h1>", unsafe_allow_html=True)
-    st.write("Silakan masukkan email lo untuk mengakses jurnal produktivitas 30 hari ini.")
-    
+    st.markdown("<h1>🌱 Neuro Nada Journal</h1>", unsafe_allow_html=True)
+    st.write("Masukkan email untuk sinkronisasi data 30 hari lo.")
     email_input = st.text_input("Alamat Email")
-    if st.button("Masuk / Daftar"):
+    if st.button("Masuk"):
         if email_input:
             st.session_state['logged_in'] = True
             st.session_state['user_email'] = email_input
             st.rerun()
         else:
-            st.warning("Bro, isi emailnya dulu dong biar bisa masuk!")
+            st.warning("Emailnya diisi dulu ya, Bro!")
 
-# --- 4. DASHBOARD UTAMA (Setelah Login) ---
+# --- 5. DASHBOARD UTAMA ---
 else:
-    # Header & Tombol Logout
     cols = st.columns([4, 1])
     with cols[0]:
-        st.markdown("<h1 class='header-title'>Neuro Nada Daily Workflow 🚀</h1>", unsafe_allow_html=True)
-        st.write(f"Sesi milik: **{st.session_state['user_email']}**")
+        st.markdown(f"<h1>Neuro Nada Daily Workflow 🚀</h1>", unsafe_allow_html=True)
+        st.write(f"User aktif: **{st.session_state['user_email']}**")
     with cols[1]:
         if st.button("Logout"):
             st.session_state['logged_in'] = False
             st.rerun()
 
-    # Karakter Nero Quote
     st.markdown("""
         <div class='nero-box'>
-            <b>^‿^ Nero bilang:</b><br>
-            "Satu langkah kecil hari ini, fondasi besar buat masa depan! Yuk, optimasi alur kerja lo dengan Neuro Nada, Bro!"
+            <b>^‿^ Nero:</b> "Data lo bakal langsung masuk ke spreadsheet <b>14bqio8D...</b> secara otomatis!"
         </div>
     """, unsafe_allow_html=True)
-    
-    # --- 5. GABUNGAN KONTEN: Panduan (Slide) + Jurnal (App) ---
-    tab_panduan, tab_harian, tab_mingguan = st.tabs(["📖 Panduan Neuro Nada", "✍️ Jurnal Harian", "🔄 Reset Mingguan"])
-    
-    # TAB 1: Panduan (Diambil dari desain presentasi)
-    with tab_panduan:
-        st.markdown("<h3 class='sub-header'>Filosofi & Kerangka Kerja</h3>", unsafe_allow_html=True)
-        col_p1, col_p2 = st.columns(2)
-        with col_p1:
-            st.write("🌿 **Mindset 'Adem'**")
-            st.write("Produktivitas bukan berarti sibuk tanpa henti. Aplikasi ini dirancang untuk menurunkan ketegangan pikiran dan menjaga fokus.")
-            st.write("🤖 **Integrasi AI**")
-            st.write("Fokuskan energi pada strategi krusial. Biarkan AI dan sistem yang menangani tugas repetitif.")
-        with col_p2:
-            st.write("✨ **Tentang Nero**")
-            st.write("Nero adalah personifikasi dari neuron otak lo. Dia hadir di sini buat ngasih pengingat prioritas pagi, ide otomatisasi siang hari, dan teman refleksi di malam hari.")
-        
-        st.info("💡 Tips: Gunakan tab 'Jurnal Harian' setiap hari, dan tab 'Reset Mingguan' setiap hari ke-7.")
 
-    # TAB 2: Input Jurnal Harian
-    with tab_harian:
-        col_pagi, col_siang, col_malam = st.columns(3)
-        
-        with col_pagi:
-            st.subheader("🌅 Pagi (Persiapan)")
-            st.write("Top 3 Prioritas Utama Hari Ini:")
-            st.checkbox("Prioritas 1", key="p1")
-            st.text_input("Detail Prioritas 1", label_visibility="collapsed")
-            st.checkbox("Prioritas 2", key="p2")
-            st.text_input("Detail Prioritas 2", label_visibility="collapsed")
-            st.checkbox("Prioritas 3", key="p3")
-            st.text_input("Detail Prioritas 3", label_visibility="collapsed")
-            
-        with col_siang:
-            st.subheader("🚀 Siang (Eksekusi)")
-            st.write("Otomatisasi Neural (AI):")
-            st.text_area("Tugas apa yang lo delegasikan ke AI hari ini?", height=130)
-            
-        with col_malam:
-            st.subheader("🌙 Malam (Refleksi)")
-            st.write("Pencapaian Terbaik:")
-            st.text_input("Hal yang bikin bangga hari ini", label_visibility="collapsed")
-            st.write("Tingkat Kepuasan:")
-            st.slider("Mood hari ini (1 = Kacau, 5 = Sempurna)", 1, 5, 3)
-        
-        st.write("---")
-        if st.button("💾 Simpan Jurnal Hari Ini", use_container_width=True):
-            st.success("Mantap! Jurnal harian lo berhasil disimpan. Istirahat yang cukup, Bro!")
+    # Tabs Konten
+    tab1, tab2 = st.tabs(["✍️ Tulis Jurnal", "📜 Riwayat Saya"])
 
-    # TAB 3: Evaluasi Mingguan (Diambil dari kerangka buku PDF)
-    with tab_mingguan:
-        st.markdown("<h3 class='sub-header'>Evaluasi Mingguan & Kalibrasi Sistem</h3>", unsafe_allow_html=True)
-        st.write("Luangkan waktu sejenak untuk me-review 7 hari ke belakang.")
-        
-        st.text_area("✅ Apa yang berjalan sangat lancar minggu ini?")
-        st.text_area("🚧 Hambatan apa yang paling sering muncul?")
-        st.text_area("🤖 Sistem AI/Otomatisasi apa yang mau ditambah atau diperbaiki minggu depan?")
-        
-        if st.button("🔄 Simpan Evaluasi Mingguan"):
-            st.success("Evaluasi mingguan tersimpan! Karakter Nero bangga banget sama progres konsisten lo!")
+    with tab1:
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.subheader("🌅 Persiapan & Eksekusi")
+            prioritas = st.text_area("Top 3 Prioritas & Action Items", height=100)
+            ai_tasks = st.text_area("Ide Otomatisasi AI hari ini", height=100)
+        with col_b:
+            st.subheader("🌙 Refleksi")
+            pencapaian = st.text_area("Pencapaian terbaik hari ini", height=100)
+            mood = st.select_slider("Gimana perasaan lo hari ini?", 
+                                    options=["Kacau", "Biasa", "Oke", "Mantap", "Sempurna"])
+
+        if st.button("💾 SIMPAN KE DRIVE SEKARANG"):
+            # Data baru yang akan dikirim
+            new_entry = pd.DataFrame([{
+                "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Email": st.session_state['user_email'],
+                "Prioritas": prioritas,
+                "AI_Tasks": ai_tasks,
+                "Pencapaian": pencapaian,
+                "Mood": mood
+            }])
+
+            try:
+                # Membaca data lama, menggabungkan, lalu update
+                df_lama = conn.read(worksheet="Sheet1")
+                df_baru = pd.concat([df_lama, new_entry], ignore_index=True)
+                conn.update(worksheet="Sheet1", data=df_baru)
+                st.success("✅ Berhasil! Data sudah tersimpan permanen di Google Sheets lo.")
+            except Exception as e:
+                st.error("Gagal nyambung ke Sheets. Cek apakah link di Secrets sudah benar.")
+
+    with tab2:
+        st.subheader("Jurnal yang Pernah Lo Tulis")
+        try:
+            full_df = conn.read(worksheet="Sheet1")
+            # Filter hanya data milik user yang sedang login
+            user_history = full_df[full_df['Email'] == st.session_state['user_email']]
+            if not user_history.empty:
+                st.dataframe(user_history.sort_values(by="Timestamp", ascending=False))
+            else:
+                st.info("Belum ada riwayat jurnal buat email ini.")
+        except:
+            st.write("Belum ada data di spreadsheet.")
