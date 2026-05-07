@@ -132,8 +132,18 @@ else:
     with tab_riwayat:
         st.subheader("Jurnal lama lo")
         try:
-            full_df = conn.read(worksheet="Sheet1")
-            user_history = full_df[full_df['Email'] == st.session_state['user_email']]
-            st.dataframe(user_history.sort_values(by="Timestamp", ascending=False), use_container_width=True)
-        except:
-            st.info("Belum ada data di spreadsheet.")
+            # Kita paksa baca ulang data terbaru dari Sheets
+            full_df = conn.read(worksheet="Sheet1", ttl=0) # ttl=0 artinya jangan pakai cache, baca asli!
+            
+            # Pastikan email dibandingkan dengan benar (case-insensitive & tanpa spasi)
+            user_email_now = st.session_state['user_email'].strip().lower()
+            full_df['Email'] = full_df['Email'].astype(str).str.strip().lower()
+            
+            user_history = full_df[full_df['Email'] == user_email_now]
+            
+            if not user_history.empty:
+                st.dataframe(user_history.sort_values(by="Timestamp", ascending=False), use_container_width=True)
+            else:
+                st.info(f"Data untuk {user_email_now} belum ada di Sheets. Coba simpan data baru dulu, Bro!")
+        except Exception as e:
+            st.error(f"Gagal narik data: {e}")
