@@ -38,7 +38,7 @@ if not st.session_state['logged_in']:
 else:
     cols = st.columns([4, 1])
     with cols[0]:
-        st.title("Neuron Ai Daily Workflow Book 🚀")
+        st.title("Neuron Ai Daily Workflow 🚀")
         st.write(f"Sesi milik: **{st.session_state['user_email']}**")
     with cols[1]:
         if st.button("Logout", key="main_logout_btn"):
