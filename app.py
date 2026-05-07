@@ -31,6 +31,8 @@ if not st.session_state['logged_in']:
             st.session_state['logged_in'] = True
             st.session_state['user_email'] = email_input.strip().lower()
             st.rerun()
+        else:
+            st.warning("Isi email dulu, Bro!")
 else:
     # Dashboard Utama
     cols = st.columns([4, 1])
@@ -39,7 +41,7 @@ else:
         st.write(f"User: **{st.session_state['user_email']}**")
     with cols[1]:
         if st.button("Logout"):
-            st.session_state['logged_in'] = False
+            st.session_state.clear()
             st.rerun()
 
     tab_harian, tab_riwayat = st.tabs(["✍️ Jurnal Harian", "📜 Riwayat Saya"])
@@ -62,14 +64,13 @@ else:
                 "Mood": mood
             }])
             try:
-                # Baca data tanpa cache
                 df_lama = conn.read(worksheet="Sheet1", ttl=0)
                 df_baru = pd.concat([df_lama, new_entry], ignore_index=True)
                 conn.update(worksheet="Sheet1", data=df_baru)
-                st.success("✅ Tersimpan!")
-                st.cache_data.clear() # Paksa bersihkan memori
+                st.success("✅ Tersimpan! Cek tab Riwayat.")
+                st.cache_data.clear()
             except Exception as e:
-                st.error(f"Gagal: {e}")
+                st.error(f"Gagal Simpan: {e}")
 
     with tab_riwayat:
         st.subheader("Jurnal lama lo")
@@ -78,25 +79,28 @@ else:
             st.rerun()
 
         try:
-            # AMBIL DATA TANPA CACHE
+            # Baca data mentah
             full_df = conn.read(worksheet="Sheet1", ttl=0)
             
-            # --- LOGIKA SAPU JAGAT ---
-            # 1. Pastikan kolom "Email" ada (nggak peduli huruf besar/kecil)
-            full_df.columns = [c.strip().capitalize() for c in full_df.columns]
-            
-            # 2. Bersihkan isi kolom Email
-            full_df['Email'] = full_df['Email'].astype(str).str.strip().lower()
-            
-            # 3. Filter data
-            current_user = st.session_state['user_email'].strip().lower()
-            user_history = full_df[full_df['Email'] == current_user]
-            
-            if not user_history.empty:
-                st.dataframe(user_history.sort_values(by="Timestamp", ascending=False), use_container_width=True)
+            if full_df is not None and not full_df.empty:
+                # Benerin nama kolom biar seragam
+                full_df.columns = [str(c).strip().capitalize() for c in full_df.columns]
+                
+                # Filter pake cara yang lebih aman
+                user_sekarang = str(st.session_state['user_email']).strip().lower()
+                
+                # Pastikan kolom Email diproses sebagai string per baris
+                full_df['Email_clean'] = full_df['Email'].astype(str).str.strip().lower()
+                
+                user_history = full_df[full_df['Email_clean'] == user_sekarang]
+                
+                if not user_history.empty:
+                    # Tampilkan kolom asli tanpa kolom bantuan Email_clean
+                    display_df = user_history.drop(columns=['Email_clean'])
+                    st.dataframe(display_df.sort_values(by="Timestamp", ascending=False), use_container_width=True)
+                else:
+                    st.warning(f"Belum ada data untuk {user_sekarang}. Coba input dulu di tab Jurnal.")
             else:
-                st.warning(f"Data buat {current_user} nggak ketemu di Sheets.")
-                # Opsi debug: Tampilkan semua email yang ada di Sheets biar ketahuan bedanya
-                # st.write("Email yang terdeteksi di Sheets:", full_df['Email'].unique())
+                st.info("Sheets masih kosong, Bro.")
         except Exception as e:
-            st.error(f"Koneksi lagi sibuk, Bro. Cek lagi: {e}")
+            st.error(f"Waduh, ada kendala baca data: {e}")
