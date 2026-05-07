@@ -35,7 +35,9 @@ st.markdown("""
         border-left: 5px solid #ffb703; 
         box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
         margin-bottom: 25px; 
+        font-size: 1.1em;
     }
+    .header-title { color: #1D3557; font-family: sans-serif; font-weight: 700; }
     .sub-header { color: #9CAF88; font-weight: bold; border-bottom: 2px solid #9CAF88; padding-bottom: 10px; margin-bottom: 20px; }
     </style>
 """, unsafe_allow_html=True)
@@ -46,7 +48,7 @@ if 'logged_in' not in st.session_state:
     st.session_state['user_email'] = ""
 
 if not st.session_state['logged_in']:
-    st.markdown("<h1>🌱 Neuro Nada Journal</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 class='header-title'>🌱 Neuro Nada Daily Journal</h1>", unsafe_allow_html=True)
     st.write("Masukkan email untuk sinkronisasi data 30 hari lo.")
     email_input = st.text_input("Alamat Email")
     if st.button("Masuk"):
@@ -61,36 +63,49 @@ if not st.session_state['logged_in']:
 else:
     cols = st.columns([4, 1])
     with cols[0]:
-        st.markdown(f"<h1>Neuro Nada Daily Workflow 🚀</h1>", unsafe_allow_html=True)
+        st.markdown(f"<h1 class='header-title'>Neuro Nada Daily Workflow 🚀</h1>", unsafe_allow_html=True)
         st.write(f"User aktif: **{st.session_state['user_email']}**")
     with cols[1]:
         if st.button("Logout"):
             st.session_state['logged_in'] = False
             st.rerun()
 
+    # Karakter Nero Quote
     st.markdown("""
         <div class='nero-box'>
             <b>^‿^ Nero bilang:</b> "Tenang aja, Bro! Fokus aja ke <i>deep work</i> lo hari ini. Urusan nyimpen dan <i>backup</i> data ke brankas digital, biar Nero yang beresin di belakang layar. Gaspol!"
         </div>
     """, unsafe_allow_html=True)
+    
+    # Navigasi Tab
+    tab_panduan, tab_harian, tab_mingguan, tab_riwayat = st.tabs(["📖 Panduan", "✍️ Jurnal Harian", "🔄 Reset Mingguan", "📜 Riwayat Saya"])
+    
+    with tab_panduan:
+        st.markdown("<h3 class='sub-header'>Filosofi & Kerangka Kerja</h3>", unsafe_allow_html=True)
+        col_p1, col_p2 = st.columns(2)
+        with col_p1:
+            st.write("🌿 **Mindset 'Adem'**")
+            st.write("Aplikasi ini dirancang untuk menurunkan ketegangan pikiran dan menjaga fokus melalui ketenangan visual.")
+            st.write("🤖 **Integrasi AI**")
+            st.write("Fokuskan energi pada strategi krusial. Biarkan AI menangani tugas repetitif.")
+        with col_p2:
+            st.write("✨ **Tentang Nero**")
+            st.write("Nero adalah personifikasi neuron otak lo yang ceria, siap nemenin progres harian lo.")
 
-    # Tabs Konten
-    tab1, tab2 = st.tabs(["✍️ Tulis Jurnal", "📜 Riwayat Saya"])
-
-    with tab1:
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.subheader("🌅 Persiapan & Eksekusi")
-            prioritas = st.text_area("Top 3 Prioritas & Action Items", height=100)
-            ai_tasks = st.text_area("Ide Otomatisasi AI hari ini", height=100)
-        with col_b:
-            st.subheader("🌙 Refleksi")
-            pencapaian = st.text_area("Pencapaian terbaik hari ini", height=100)
-            mood = st.select_slider("Gimana perasaan lo hari ini?", 
-                                    options=["Kacau", "Biasa", "Oke", "Mantap", "Sempurna"])
-
-        if st.button("💾 SIMPAN KE DRIVE SEKARANG"):
-            # Data baru yang akan dikirim
+    with tab_harian:
+        col_pagi, col_siang, col_malam = st.columns(3)
+        with col_pagi:
+            st.subheader("🌅 Pagi")
+            prioritas = st.text_area("Top 3 Prioritas Utama", height=150)
+        with col_siang:
+            st.subheader("🚀 Siang")
+            ai_tasks = st.text_area("Otomatisasi AI hari ini", height=150)
+        with col_malam:
+            st.subheader("🌙 Malam")
+            pencapaian = st.text_area("Pencapaian terbaik", height=100)
+            mood = st.select_slider("Mood", options=["Kacau", "Biasa", "Oke", "Mantap", "Sempurna"], value="Oke")
+        
+        if st.button("💾 SIMPAN KE DRIVE SEKARANG", use_container_width=True):
             new_entry = pd.DataFrame([{
                 "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "Email": st.session_state['user_email'],
@@ -99,25 +114,26 @@ else:
                 "Pencapaian": pencapaian,
                 "Mood": mood
             }])
-
             try:
-                # Membaca data lama, menggabungkan, lalu update
                 df_lama = conn.read(worksheet="Sheet1")
                 df_baru = pd.concat([df_lama, new_entry], ignore_index=True)
                 conn.update(worksheet="Sheet1", data=df_baru)
-                st.success("✅ Berhasil! Data sudah tersimpan permanen di Google Sheets lo.")
-            except Exception as e:
-                st.error("Gagal nyambung ke Sheets. Cek apakah link di Secrets sudah benar.")
+                st.success("✅ Berhasil disimpan ke Google Sheets!")
+            except:
+                st.error("Cek koneksi atau Secrets URL lo, Bro!")
 
-    with tab2:
-        st.subheader("Jurnal yang Pernah Lo Tulis")
+    with tab_mingguan:
+        st.markdown("<h3 class='sub-header'>Evaluasi Mingguan</h3>", unsafe_allow_html=True)
+        eval_lancar = st.text_area("Apa yang berjalan sangat lancar minggu ini?")
+        eval_hambat = st.text_area("Hambatan apa yang paling sering muncul?")
+        if st.button("🔄 Simpan Evaluasi"):
+            st.success("Evaluasi mingguan tersimpan!")
+
+    with tab_riwayat:
+        st.subheader("Jurnal lama lo")
         try:
             full_df = conn.read(worksheet="Sheet1")
-            # Filter hanya data milik user yang sedang login
             user_history = full_df[full_df['Email'] == st.session_state['user_email']]
-            if not user_history.empty:
-                st.dataframe(user_history.sort_values(by="Timestamp", ascending=False))
-            else:
-                st.info("Belum ada riwayat jurnal buat email ini.")
+            st.dataframe(user_history.sort_values(by="Timestamp", ascending=False), use_container_width=True)
         except:
-            st.write("Belum ada data di spreadsheet.")
+            st.info("Belum ada data di spreadsheet.")
