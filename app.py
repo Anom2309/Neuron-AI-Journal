@@ -127,25 +127,36 @@ else:
             st.rerun()
 
         try:
-            # Baca data terbaru tanpa cache
-            full_df = conn.read(worksheet="Sheet1", ttl=0)
+            # 1. Tarik data mentah tanpa cache
+            df = conn.read(worksheet="Sheet1", ttl=0)
             
-            if not full_df.empty:
-                # Normalisasi Nama Kolom & Data Email
-                full_df.columns = [str(c).strip().capitalize() for c in full_df.columns]
-                full_df['Email_search'] = full_df['Email'].astype(str).str.strip().lower()
+            if df is not None and not df.empty:
+                # 2. Standarisasi: Paksa semua nama kolom jadi huruf kecil & hapus spasi
+                df.columns = [str(c).strip().lower() for c in df.columns]
                 
-                # Filter berdasarkan email login
-                user_email = st.session_state['user_email']
-                user_history = full_df[full_df['Email_search'] == user_email]
-                
-                if not user_history.empty:
-                    # Tampilkan tanpa kolom bantu
-                    display_df = user_history.drop(columns=['Email_search'])
-                    st.dataframe(display_df.sort_values(by="Timestamp", ascending=False), use_container_width=True)
+                # 3. Cari kolom yang namanya 'email'
+                if 'email' in df.columns:
+                    user_sekarang = str(st.session_state['user_email']).strip().lower()
+                    
+                    # 4. Filter dengan aman
+                    df['email_tmp'] = df['email'].astype(str).str.strip().lower()
+                    user_history = df[df['email_tmp'] == user_sekarang].copy()
+                    
+                    if not user_history.empty:
+                        # Hapus kolom bantuan & rapihin nama kolom buat tampilan
+                        user_history = user_history.drop(columns=['email_tmp'])
+                        user_history.columns = [str(c).capitalize() for c in user_history.columns]
+                        
+                        st.dataframe(
+                            user_history.sort_values(by=user_history.columns[0], ascending=False), 
+                            use_container_width=True
+                        )
+                    else:
+                        st.warning(f"Data buat {user_sekarang} nggak ketemu. Coba input baru dulu, Bro.")
                 else:
-                    st.info(f"Belum ada riwayat jurnal buat {user_email}.")
+                    st.error("Kolom 'Email' nggak nampak di Sheets. Cek judul kolom di Excel lo!")
+                    st.write("Kolom yang kebaca:", list(df.columns))
             else:
-                st.info("Database masih kosong.")
+                st.info("Sheets masih kosong melompong, Bro.")
         except Exception as e:
-            st.error(f"Gagal memuat riwayat: {e}")
+            st.error(f"Gagal narik riwayat: {e}")
