@@ -34,11 +34,10 @@ if not st.session_state['logged_in']:
         else:
             st.warning("Isi email dulu, Bro!")
 else:
-    # Dashboard Utama
     cols = st.columns([4, 1])
     with cols[0]:
         st.title("Neuro Nada Daily Workflow 🚀")
-        st.write(f"User: **{st.session_state['user_email']}**")
+        st.write(f"User aktif: **{st.session_state['user_email']}**")
     with cols[1]:
         if st.button("Logout"):
             st.session_state.clear()
@@ -64,43 +63,32 @@ else:
                 "Mood": mood
             }])
             try:
+                # Ambil data lama tanpa cache
                 df_lama = conn.read(worksheet="Sheet1", ttl=0)
                 df_baru = pd.concat([df_lama, new_entry], ignore_index=True)
                 conn.update(worksheet="Sheet1", data=df_baru)
-                st.success("✅ Tersimpan! Cek tab Riwayat.")
+                st.success("✅ Berhasil Simpan!")
                 st.cache_data.clear()
             except Exception as e:
                 st.error(f"Gagal Simpan: {e}")
 
     with tab_riwayat:
-        st.subheader("Jurnal lama lo")
-        if st.button("🔄 Paksa Refresh Data"):
+        st.subheader("Semua Riwayat Jurnal")
+        # TOMBOL REFRESH MANUAL
+        if st.button("🔄 Tarik Data Terbaru"):
             st.cache_data.clear()
             st.rerun()
 
         try:
-            # Baca data mentah
-            full_df = conn.read(worksheet="Sheet1", ttl=0)
+            # KITA TAMPILIN SEMUA DATA TANPA FILTER EMAIL DULU
+            # BIAR KETAHUAN DATANYA KE-READ APA ENGGAK
+            raw_data = conn.read(worksheet="Sheet1", ttl=0)
             
-            if full_df is not None and not full_df.empty:
-                # Benerin nama kolom biar seragam
-                full_df.columns = [str(c).strip().capitalize() for c in full_df.columns]
-                
-                # Filter pake cara yang lebih aman
-                user_sekarang = str(st.session_state['user_email']).strip().lower()
-                
-                # Pastikan kolom Email diproses sebagai string per baris
-                full_df['Email_clean'] = full_df['Email'].astype(str).str.strip().lower()
-                
-                user_history = full_df[full_df['Email_clean'] == user_sekarang]
-                
-                if not user_history.empty:
-                    # Tampilkan kolom asli tanpa kolom bantuan Email_clean
-                    display_df = user_history.drop(columns=['Email_clean'])
-                    st.dataframe(display_df.sort_values(by="Timestamp", ascending=False), use_container_width=True)
-                else:
-                    st.warning(f"Belum ada data untuk {user_sekarang}. Coba input dulu di tab Jurnal.")
+            if raw_data is not None and not raw_data.empty:
+                # Tampilkan semuanya
+                st.dataframe(raw_data.sort_values(by=raw_data.columns[0], ascending=False), use_container_width=True)
+                st.info("Catatan: Saat ini filter email dimatikan untuk memastikan koneksi lancar.")
             else:
-                st.info("Sheets masih kosong, Bro.")
+                st.warning("Data di Sheets terdeteksi kosong oleh aplikasi. Cek nama Sheet lo (harus 'Sheet1').")
         except Exception as e:
-            st.error(f"Waduh, ada kendala baca data: {e}")
+            st.error(f"Error pembacaan: {e}")
