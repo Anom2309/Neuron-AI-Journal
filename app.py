@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 
 # --- 1. KONFIGURASI HALAMAN ---
-st.set_page_config(page_title="Neuron AI Daily Workflow - Neuron AI", page_icon="🌱", layout="centered")
+st.set_page_config(page_title="Daily Workflow - Neuron AI", page_icon="🌱", layout="centered")
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 # CSS Custom (Estetika Sage Green)
@@ -38,7 +38,7 @@ if not st.session_state['logged_in']:
 else:
     cols = st.columns([4, 1])
     with cols[0]:
-        st.title("Daily Workflow Book 🚀")
+        st.title("Neuron Ai Daily Workflow Book 🚀")
         st.write(f"Sesi milik: **{st.session_state['user_email']}**")
     with cols[1]:
         if st.button("Logout", key="main_logout_btn"):
