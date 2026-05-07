@@ -35,6 +35,7 @@ st.markdown("""
         border-left: 5px solid #ffb703; 
         box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
         margin-bottom: 25px; 
+        font-size: 1.1em;
     }
     .sub-header { color: #9CAF88; font-weight: bold; border-bottom: 2px solid #9CAF88; padding-bottom: 10px; margin-bottom: 20px; }
     </style>
@@ -68,9 +69,10 @@ else:
             st.session_state['logged_in'] = False
             st.rerun()
 
+    # Quote Nero yang udah di-update (Lebih luwes & motivasi)
     st.markdown("""
         <div class='nero-box'>
-            <b>^‿^ Nero:</b> "Data lo bakal langsung masuk ke spreadsheet <b>14bqio8D...</b> secara otomatis!"
+            <b>^‿^ Nero bilang:</b> "Tenang aja, Bro! Fokus aja ke <i>deep work</i> lo hari ini. Urusan nyimpen dan <i>backup</i> data ke brankas digital, biar Nero yang beresin di belakang layar. Gaspol!"
         </div>
     """, unsafe_allow_html=True)
 
