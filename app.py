@@ -7,8 +7,8 @@ from datetime import datetime
 st.set_page_config(page_title="Daily Workflow - Neuron AI", page_icon="🌱", layout="centered")
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-# --- LINK GOOGLE SHEETS LO (PASTI TEMBUS) ---
-SHEET_URL = "https://docs.google.com/spreadsheets/d/14bqio8DdbK2YcpG5ACikzuj_rlEP7tdVtWWHbXcbLGA/edit"
+# --- LINK GOOGLE SHEETS ASLI (LINK YANG LO KASIH) ---
+SHEET_URL = "https://docs.google.com/spreadsheets/d/14bqio8DdbK2YcpG5ACikzuj_rIEP7tdVtWWHbXcbLGA/edit?gid=0#gid=0"
 
 st.markdown("""
     <style>
@@ -46,7 +46,6 @@ else:
         is_premium = True
     else:
         try:
-            # Pake SHEET_URL langsung di sini
             df_db = conn.read(spreadsheet=SHEET_URL, worksheet="Sheet1", ttl=0)
             if df_db is not None and not df_db.empty:
                 col_email = [c for c in df_db.columns if 'email' in str(c).lower()]
@@ -55,7 +54,6 @@ else:
                 if col_email and col_status:
                     mask = df_db[col_email[0]].astype(str).str.strip().str.lower() == user_email
                     user_info = df_db[mask]
-                    
                     if not user_info.empty:
                         status_list = user_info[col_status[0]].astype(str).str.strip().str.lower().tolist()
                         if 'premium' in status_list:
@@ -74,7 +72,7 @@ else:
             st.session_state.clear()
             st.rerun()
 
-    # BANNER JUALAN 
+    # BANNER UPGRADE
     if not is_premium:
         st.markdown(f"""
             <div class='premium-card'>
@@ -84,10 +82,8 @@ else:
             </div>
         """, unsafe_allow_html=True)
     else:
-        if user_email == "sedichachmad@gmail.com":
-            st.markdown("<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"Selamat datang kembali, Master! Semua sistem Premium sudah kebuka buat lo!\"</div>", unsafe_allow_html=True)
-        else:
-            st.markdown("<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"Mode Premium Aktif! Yuk, kita sikat hari ini, Bro!\"</div>", unsafe_allow_html=True)
+        msg = "Selamat datang kembali, Master!" if user_email == "sedichachmad@gmail.com" else "Mode Premium Aktif!"
+        st.markdown(f"<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"{msg} Yuk, kita sikat hari ini, Bro!\"</div>", unsafe_allow_html=True)
     
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["🌅 Pagi", "🚀 Siang", "🌙 Malam", "📜 Riwayat", "📊 Analytics"])
     
@@ -117,14 +113,13 @@ else:
                 "Status": "Premium" if is_premium else "Free"
             }])
             try:
-                # Pakai SHEET_URL langsung saat simpan
                 df_lama = conn.read(spreadsheet=SHEET_URL, worksheet="Sheet1", ttl=0)
                 df_baru = pd.concat([df_lama, new_entry], ignore_index=True)
                 conn.update(spreadsheet=SHEET_URL, worksheet="Sheet1", data=df_baru)
                 st.success("✅ Berhasil Simpan!")
                 st.cache_data.clear()
             except Exception as e:
-                st.error(f"Gagal simpan: {e}")
+                st.error(f"Gagal simpan: {repr(e)}")
 
     with tab4:
         st.subheader("Riwayat Jurnal Lo")
@@ -133,7 +128,6 @@ else:
             st.rerun()
             
         try:
-            # Pakai SHEET_URL di riwayat
             df_full = conn.read(spreadsheet=SHEET_URL, worksheet="Sheet1", ttl=0)
             if df_full is not None and not df_full.empty:
                 target_col = [c for c in df_full.columns if 'email' in str(c).lower()]
@@ -149,40 +143,34 @@ else:
                         else:
                             st.dataframe(user_df.sort_values(by=user_df.columns[0], ascending=False), use_container_width=True)
                     else:
-                        st.info(f"Belum ada data buat {user_email}. Coba Simpan dulu, Bro.")
+                        st.info(f"Belum ada data buat {user_email}.")
                 else:
-                    st.warning("Kolom Email nggak spesifik, nampilin semua data:")
                     st.dataframe(df_full)
             else:
                 st.info("Sheets masih kosong.")
         except Exception as e:
-            st.error(f"Lagi sibuk: {e}")
+            st.error(f"Lagi sibuk: {repr(e)}")
 
     with tab5:
         st.subheader("📊 Neuron Analytics")
         if is_premium:
-            st.write("Tren produktivitas dan kepuasan lo berdasarkan input jurnal:")
+            st.write("Tren produktivitas dan kepuasan lo:")
             try:
-                # Pakai SHEET_URL di analytics
                 df_chart = conn.read(spreadsheet=SHEET_URL, worksheet="Sheet1", ttl=0)
                 col_em = [c for c in df_chart.columns if 'email' in str(c).lower()]
                 if col_em:
                     mask = df_chart[col_em[0]].astype(str).str.strip().str.lower() == user_email
                     user_data = df_chart[mask].copy()
-                    
                     if not user_data.empty:
                         col_mood = [c for c in user_data.columns if 'mood' in str(c).lower()]
                         col_time = [c for c in user_data.columns if 'timestamp' in str(c).lower()]
-                        
                         if col_mood and col_time:
                             user_data[col_mood[0]] = pd.to_numeric(user_data[col_mood[0]], errors='coerce')
                             chart_data = user_data.set_index(col_time[0])[col_mood[0]]
                             st.line_chart(chart_data)
-                            st.caption("Puncak grafik menunjukkan kondisi *flow state* terbaik lo.")
                         else:
-                            st.info("Belum cukup data untuk menggambar grafik.")
+                            st.info("Data belum cukup.")
             except Exception as e:
                 st.error("Gagal muat grafik.")
         else:
-            st.error("🔒 Fitur Analytics Terkunci")
-            st.write("Fitur ini eksklusif untuk member Premium.")
+            st.error("🔒 Fitur Analytics Terkunci. Upgrade ke Premium.")
