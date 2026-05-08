@@ -38,32 +38,34 @@ else:
     user_email = st.session_state['user_email']
     is_premium = False
     
-    # --- JURUS SAPU JAGAT (ANTI KOPONG) ---
-    try:
-        df_db = conn.read(worksheet="Sheet1", ttl=0)
-        if df_db is not None and not df_db.empty:
-            col_email = [c for c in df_db.columns if 'email' in str(c).lower()]
-            col_status = [c for c in df_db.columns if 'status' in str(c).lower()]
-            
-            if col_email and col_status:
-                mask = df_db[col_email[0]].astype(str).str.strip().str.lower() == user_email
-                user_info = df_db[mask]
+    # --- JURUS SAKTI KHUSUS OWNER (ADMIN BYPASS) ---
+    if user_email == "sedichachmad@gmail.com":
+        is_premium = True
+    else:
+        # Cek Google Sheets HANYA untuk user lain
+        try:
+            df_db = conn.read(worksheet="Sheet1", ttl=0)
+            if df_db is not None and not df_db.empty:
+                col_email = [c for c in df_db.columns if 'email' in str(c).lower()]
+                col_status = [c for c in df_db.columns if 'status' in str(c).lower()]
                 
-                if not user_info.empty:
-                    # Ambil semua data status milik user ini, ubah ke string biar aman dari NaN
-                    status_list = user_info[col_status[0]].astype(str).str.strip().str.lower().tolist()
+                if col_email and col_status:
+                    mask = df_db[col_email[0]].astype(str).str.strip().str.lower() == user_email
+                    user_info = df_db[mask]
                     
-                    # Kalau ada kata 'premium' di baris manapun, langsung aktifin!
-                    if 'premium' in status_list:
-                        is_premium = True
-    except Exception as e:
-        pass # Lanjut aja, anggap Free kalau gagal baca
+                    if not user_info.empty:
+                        status_list = user_info[col_status[0]].astype(str).str.strip().str.lower().tolist()
+                        if 'premium' in status_list:
+                            is_premium = True
+        except Exception as e:
+            pass 
     
     # Header Utama
     cols = st.columns([4, 1])
     with cols[0]:
         st.title("Daily Workflow Book 🚀")
-        tag_status = "🟡 PREMIUM" if is_premium else "⚪ FREE"
+        # Tambahan tulisan "OWNER" khusus buat lo
+        tag_status = "👑 OWNER" if user_email == "sedichachmad@gmail.com" else ("🟡 PREMIUM" if is_premium else "⚪ FREE")
         st.write(f"Sesi milik: **{user_email}** | {tag_status}")
     with cols[1]:
         if st.button("Logout", key="btn_logout"):
@@ -80,7 +82,10 @@ else:
             </div>
         """, unsafe_allow_html=True)
     else:
-        st.markdown("<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"Mode Premium Aktif! Yuk, kita sikat hari ini, Bro!\"</div>", unsafe_allow_html=True)
+        if user_email == "sedichachmad@gmail.com":
+            st.markdown("<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"Selamat datang kembali, Master! Semua sistem Premium sudah kebuka buat lo!\"</div>", unsafe_allow_html=True)
+        else:
+            st.markdown("<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"Mode Premium Aktif! Yuk, kita sikat hari ini, Bro!\"</div>", unsafe_allow_html=True)
     
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["🌅 Pagi", "🚀 Siang", "🌙 Malam", "📜 Riwayat", "📊 Analytics"])
     
