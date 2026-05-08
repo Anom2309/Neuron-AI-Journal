@@ -7,7 +7,7 @@ from datetime import datetime
 st.set_page_config(page_title="Daily Workflow - Neuron AI", page_icon="🌱", layout="centered")
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-# --- LINK GOOGLE SHEETS ASLI (LINK YANG LO KASIH) ---
+# --- LINK GOOGLE SHEETS ASLI ---
 SHEET_URL = "https://docs.google.com/spreadsheets/d/14bqio8DdbK2YcpG5ACikzuj_rIEP7tdVtWWHbXcbLGA/edit?gid=0#gid=0"
 
 st.markdown("""
@@ -41,7 +41,7 @@ else:
     user_email = st.session_state['user_email']
     is_premium = False
     
-    # --- JURUS SAKTI KHUSUS OWNER (ADMIN BYPASS) ---
+    # --- JURUS SAKTI KHUSUS OWNER ---
     if user_email == "sedichachmad@gmail.com":
         is_premium = True
     else:
@@ -85,22 +85,39 @@ else:
         msg = "Selamat datang kembali, Master!" if user_email == "sedichachmad@gmail.com" else "Mode Premium Aktif!"
         st.markdown(f"<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"{msg} Yuk, kita sikat hari ini, Bro!\"</div>", unsafe_allow_html=True)
     
+    # --- PANDUAN PENGGUNAAN (BISA DILIPAT) ---
+    with st.expander("📖 Panduan Penggunaan Neuron AI (Klik di sini)", expanded=False):
+        st.markdown("""
+        **Selamat datang di Neuron AI!** Aplikasi ini didesain khusus untuk menjaga *mindset*, fokus, dan produktivitas lo tetap berada di jalur yang benar (Flow State). 
+        
+        Ikuti 3 siklus harian ini:
+        
+        * 🌅 **Tab Pagi (Persiapan):** Jangan penuhi otak lo dengan banyak hal. Tuliskan **maksimal 3 prioritas paling penting** yang harus selesai hari ini.
+        * 🚀 **Tab Siang (Eksekusi):** Kerja cerdas, bukan cuma keras. Tuliskan tugas-tugas repetitif yang bisa lo **delegasikan ke AI** (seperti ChatGPT, Claude, dll) biar waktu lo lebih efisien.
+        * 🌙 **Tab Malam (Refleksi):** Sebelum tidur, tulis satu pencapaian yang bikin lo bangga hari ini sekecil apapun itu. Evaluasi tingkat kepuasan (Mood) lo, lalu klik **Simpan Jurnal Hari Ini**.
+        
+        *💡 Catatan: Cukup klik tombol Simpan SATU KALI di malam hari setelah semua tab terisi.*
+        """)
+
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["🌅 Pagi", "🚀 Siang", "🌙 Malam", "📜 Riwayat", "📊 Analytics"])
     
     with tab1:
         st.subheader("Top 3 Prioritas")
-        d1 = st.text_input("Detail 1", key="d1")
-        d2 = st.text_input("Detail 2", key="d2")
-        d3 = st.text_input("Detail 3", key="d3")
+        st.caption("Fokuskan pikiran. Apa 3 hal terpenting hari ini?")
+        d1 = st.text_input("Prioritas 1", key="d1")
+        d2 = st.text_input("Prioritas 2", key="d2")
+        d3 = st.text_input("Prioritas 3", key="d3")
         
     with tab2:
         st.subheader("Otomatisasi AI")
+        st.caption("Tugas apa yang bisa dikerjakan oleh AI hari ini?")
         ai_tasks = st.text_area("Ide otomatisasi...", height=150, key="ai")
         
     with tab3:
         st.subheader("Refleksi")
-        achieve = st.text_input("Pencapaian", key="achieve")
-        mood_val = st.slider("Mood (1-5)", 1, 5, 3, key="mood")
+        st.caption("Evaluasi progres lo sebelum menutup hari.")
+        achieve = st.text_input("Pencapaian hari ini", key="achieve")
+        mood_val = st.slider("Mood & Energi (1: Drop - 5: On Fire)", 1, 5, 3, key="mood")
         
         if st.button("Simpan Jurnal Hari Ini", key="btn_save_jurnal"):
             new_entry = pd.DataFrame([{
@@ -116,7 +133,7 @@ else:
                 df_lama = conn.read(spreadsheet=SHEET_URL, worksheet="Sheet1", ttl=0)
                 df_baru = pd.concat([df_lama, new_entry], ignore_index=True)
                 conn.update(spreadsheet=SHEET_URL, worksheet="Sheet1", data=df_baru)
-                st.success("✅ Berhasil Simpan!")
+                st.success("✅ Berhasil Simpan! Data lo udah masuk ke database.")
                 st.cache_data.clear()
             except Exception as e:
                 st.error(f"Gagal simpan: {repr(e)}")
@@ -154,7 +171,7 @@ else:
     with tab5:
         st.subheader("📊 Neuron Analytics")
         if is_premium:
-            st.write("Tren produktivitas dan kepuasan lo:")
+            st.write("Tren produktivitas dan kepuasan (Flow State) lo:")
             try:
                 df_chart = conn.read(spreadsheet=SHEET_URL, worksheet="Sheet1", ttl=0)
                 col_em = [c for c in df_chart.columns if 'email' in str(c).lower()]
