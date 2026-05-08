@@ -78,11 +78,11 @@ else:
             <div class='premium-card'>
                 <h3>🔒 Upgrade Neuron AI Premium</h3>
                 <p>Buka akses <b>Riwayat Tanpa Batas</b> dan <b>Grafik Mood Analytics</b>.</p>
-                <a href='https://wa.me/628XXXXXXXXXXX?text=Halo+Achmad,+gw+mau+upgrade+Neuron+AI+buat+email+{user_email}' style='color: #1D3557; font-weight: bold; text-decoration: none; background: white; padding: 10px 20px; border-radius: 8px;'>Upgrade via WhatsApp</a>
+                <a href='https://wa.me/6282114982376?text=Halo+Achmad,+gw+mau+upgrade+Neuron+AI+buat+email+{user_email}' style='color: #1D3557; font-weight: bold; text-decoration: none; background: white; padding: 10px 20px; border-radius: 8px;'>Upgrade via WhatsApp</a>
             </div>
         """, unsafe_allow_html=True)
     else:
-        msg = "Selamat Datang. Ruang fokus ini sudah siap menemanimu. Yuk, selaraskan pikiran dan wujudkan versi terbaik dirimu hari ini" if user_email == "sedichachmad@gmail.com" else "Mode Premium Aktif!"
+        msg = "Selamat Datang. Ruang fokus ini sudah siap menemanimu. Yuk, selaraskan pikiran dan wujudkan versi terbaik dirimu hari ini" if user_email == "sedichachmad@gmail.com" else "Selamat Datang. Ruang fokus ini sudah siap menemanimu. Yuk, selaraskan pikiran dan wujudkan versi terbaik dirimu hari ini"
         st.markdown(f"<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"{msg} \"</div>", unsafe_allow_html=True)
     
     # --- PANDUAN PENGGUNAAN ---
