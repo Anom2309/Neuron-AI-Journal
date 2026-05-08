@@ -3,7 +3,7 @@ from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 from datetime import datetime
 
-# 1. Konfigurasi Halaman & Tema (Tetap Aman & Adem)
+# 1. Konfigurasi Halaman & Tema
 st.set_page_config(page_title="Daily Workflow - Neuron AI", page_icon="🌱", layout="centered")
 conn = st.connection("gsheets", type=GSheetsConnection)
 
@@ -38,23 +38,26 @@ else:
     user_email = st.session_state['user_email']
     is_premium = False
     
-    # AMBIL DATA DARI SHEETS BUAT CEK STATUS PREMIUM / FREE
+    # --- JURUS SAPU JAGAT (ANTI KOPONG) ---
     try:
         df_db = conn.read(worksheet="Sheet1", ttl=0)
         if df_db is not None and not df_db.empty:
-            # Cari kolom email dan status
             col_email = [c for c in df_db.columns if 'email' in str(c).lower()]
             col_status = [c for c in df_db.columns if 'status' in str(c).lower()]
             
             if col_email and col_status:
                 mask = df_db[col_email[0]].astype(str).str.strip().str.lower() == user_email
                 user_info = df_db[mask]
+                
                 if not user_info.empty:
-                    # Cek apakah tulisan di kolom status adalah "Premium"
-                    if user_info[col_status[0]].iloc[0].strip().lower() == 'premium':
+                    # Ambil semua data status milik user ini, ubah ke string biar aman dari NaN
+                    status_list = user_info[col_status[0]].astype(str).str.strip().str.lower().tolist()
+                    
+                    # Kalau ada kata 'premium' di baris manapun, langsung aktifin!
+                    if 'premium' in status_list:
                         is_premium = True
     except Exception as e:
-        pass # Lanjut aja, anggap Free kalau gagal baca status
+        pass # Lanjut aja, anggap Free kalau gagal baca
     
     # Header Utama
     cols = st.columns([4, 1])
@@ -104,7 +107,7 @@ else:
                 "AI_Tasks": ai_tasks,
                 "Pencapaian": achieve,
                 "Mood": mood_val,
-                "Status": "Premium" if is_premium else "Free" # Status ikut kesimpen
+                "Status": "Premium" if is_premium else "Free"
             }])
             try:
                 df_lama = conn.read(worksheet="Sheet1", ttl=0)
@@ -115,7 +118,6 @@ else:
             except Exception as e:
                 st.error(f"Gagal simpan: {e}")
 
-    # --- TAB RIWAYAT: DENGAN SISTEM GATEKEEPER ---
     with tab4:
         st.subheader("Riwayat Jurnal Lo")
         if st.button("🔄 Paksa Muat Ulang", key="btn_refresh"):
@@ -128,18 +130,15 @@ else:
                 target_col = [c for c in df_full.columns if 'email' in str(c).lower()]
                 if target_col:
                     col_key = target_col[0]
-                    # OBAT ERROR: pakai .str.strip().str.lower()
                     mask = df_full[col_key].astype(str).str.strip().str.lower() == user_email
                     user_df = df_full[mask].copy()
                     
                     if not user_df.empty:
-                        # LOGIKA GATEKEEPER MONETISASI
+                        # LOGIKA GATEKEEPER
                         if not is_premium:
                             st.warning("🔒 Akun Gratis hanya menampilkan 3 data terakhir.")
-                            # Cuma nampilin 3 baris
                             st.dataframe(user_df.sort_values(by=user_df.columns[0], ascending=False).head(3), use_container_width=True)
                         else:
-                            # Premium nampilin semua
                             st.dataframe(user_df.sort_values(by=user_df.columns[0], ascending=False), use_container_width=True)
                     else:
                         st.info(f"Belum ada data buat {user_email}. Coba Simpan dulu, Bro.")
@@ -151,7 +150,6 @@ else:
         except Exception as e:
             st.error(f"Lagi sibuk: {e}")
 
-    # --- TAB BARU: ANALYTICS (KHUSUS PREMIUM) ---
     with tab5:
         st.subheader("📊 Neuron Analytics")
         if is_premium:
@@ -178,4 +176,4 @@ else:
                 st.error("Gagal muat grafik.")
         else:
             st.error("🔒 Fitur Analytics Terkunci")
-            st.write("Fitur ini eksklusif untuk member Premium. Lo bisa melacak korelasi antara *Mood* dan pola kerja harian lo.")
+            st.write("Fitur ini eksklusif untuk member Premium.")
