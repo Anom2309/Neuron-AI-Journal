@@ -83,7 +83,7 @@ else:
         """, unsafe_allow_html=True)
     else:
         msg = "Senang Datang. Ruang fokus ini sudah siap menemanimu. Yuk, selaraskan pikiran dan wujudkan versi terbaik dirimu hari ini" if user_email == "sedichachmad@gmail.com" else "Mode Premium Aktif!"
-        st.markdown(f"<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"{msg} Yuk, kita sikat hari ini, Bro!\"</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"{msg} \"</div>", unsafe_allow_html=True)
     
     # --- PANDUAN PENGGUNAAN ---
     with st.expander("📖 Panduan Penggunaan Neuron AI (Klik di sini)", expanded=False):
