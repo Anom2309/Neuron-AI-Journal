@@ -41,7 +41,7 @@ else:
     user_email = st.session_state['user_email']
     is_premium = False
     
-    # --- JURUS SAKTI KHUSUS OWNER ---
+    # --- JURUS SAKTI KHUSUS OWNER (ADMIN BYPASS) ---
     if user_email == "sedichachmad@gmail.com":
         is_premium = True
     else:
@@ -85,16 +85,16 @@ else:
         msg = "Selamat datang kembali, Master!" if user_email == "sedichachmad@gmail.com" else "Mode Premium Aktif!"
         st.markdown(f"<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"{msg} Yuk, kita sikat hari ini, Bro!\"</div>", unsafe_allow_html=True)
     
-    # --- PANDUAN PENGGUNAAN (BISA DILIPAT) ---
+    # --- PANDUAN PENGGUNAAN ---
     with st.expander("📖 Panduan Penggunaan Neuron AI (Klik di sini)", expanded=False):
         st.markdown("""
         **Selamat datang di Neuron AI!** Aplikasi ini didesain khusus untuk menjaga *mindset*, fokus, dan produktivitas lo tetap berada di jalur yang benar (Flow State). 
         
         Ikuti 3 siklus harian ini:
         
-        * 🌅 **Tab Pagi (Persiapan):** Jangan penuhi otak lo dengan banyak hal. Tuliskan **maksimal 3 prioritas paling penting** yang harus selesai hari ini.
-        * 🚀 **Tab Siang (Eksekusi):** Kerja cerdas, bukan cuma keras. Tuliskan tugas-tugas repetitif yang bisa lo **delegasikan ke AI** (seperti ChatGPT, Claude, dll) biar waktu lo lebih efisien.
-        * 🌙 **Tab Malam (Refleksi):** Sebelum tidur, tulis satu pencapaian yang bikin lo bangga hari ini sekecil apapun itu. Evaluasi tingkat kepuasan (Mood) lo, lalu klik **Simpan Jurnal Hari Ini**.
+        * 🌅 **Tab Pagi (Persiapan):** Tuliskan **maksimal 3 prioritas paling penting** hari ini.
+        * 🚀 **Tab Siang (Eksekusi):** Tuliskan tugas-tugas repetitif yang bisa lo **delegasikan ke AI**.
+        * 🌙 **Tab Malam (Refleksi):** Tulis pencapaian hari ini dan evaluasi Mood lo, lalu klik **Simpan Jurnal**.
         
         *💡 Catatan: Cukup klik tombol Simpan SATU KALI di malam hari setelah semua tab terisi.*
         """)
@@ -103,7 +103,7 @@ else:
     
     with tab1:
         st.subheader("Top 3 Prioritas")
-        st.caption("Fokuskan pikiran. Apa 3 hal terpenting hari ini?")
+        st.caption("Apa 3 hal terpenting hari ini?")
         d1 = st.text_input("Prioritas 1", key="d1")
         d2 = st.text_input("Prioritas 2", key="d2")
         d3 = st.text_input("Prioritas 3", key="d3")
@@ -120,23 +120,27 @@ else:
         mood_val = st.slider("Mood & Energi (1: Drop - 5: On Fire)", 1, 5, 3, key="mood")
         
         if st.button("Simpan Jurnal Hari Ini", key="btn_save_jurnal"):
-            new_entry = pd.DataFrame([{
-                "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "Email": user_email,
-                "Prioritas": f"{d1} | {d2} | {d3}",
-                "AI_Tasks": ai_tasks,
-                "Pencapaian": achieve,
-                "Mood": mood_val,
-                "Status": "Premium" if is_premium else "Free"
-            }])
-            try:
-                df_lama = conn.read(spreadsheet=SHEET_URL, worksheet="Sheet1", ttl=0)
-                df_baru = pd.concat([df_lama, new_entry], ignore_index=True)
-                conn.update(spreadsheet=SHEET_URL, worksheet="Sheet1", data=df_baru)
-                st.success("✅ Berhasil Simpan! Data lo udah masuk ke database.")
-                st.cache_data.clear()
-            except Exception as e:
-                st.error(f"Gagal simpan: {repr(e)}")
+            # --- PENAMBAHAN 1: VALIDASI FORM ---
+            if not d1 or not achieve:
+                st.warning("⚠️ Bro, minimal isi Prioritas 1 dan Pencapaian hari ini dong sebelum disimpan!")
+            else:
+                new_entry = pd.DataFrame([{
+                    "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "Email": user_email,
+                    "Prioritas": f"{d1} | {d2} | {d3}",
+                    "AI_Tasks": ai_tasks,
+                    "Pencapaian": achieve,
+                    "Mood": mood_val,
+                    "Status": "Premium" if is_premium else "Free"
+                }])
+                try:
+                    df_lama = conn.read(spreadsheet=SHEET_URL, worksheet="Sheet1", ttl=0)
+                    df_baru = pd.concat([df_lama, new_entry], ignore_index=True)
+                    conn.update(spreadsheet=SHEET_URL, worksheet="Sheet1", data=df_baru)
+                    st.success("✅ Berhasil Simpan! Data lo udah masuk ke database.")
+                    st.cache_data.clear()
+                except Exception as e:
+                    st.error(f"Gagal simpan: {repr(e)}")
 
     with tab4:
         st.subheader("Riwayat Jurnal Lo")
@@ -154,15 +158,26 @@ else:
                     user_df = df_full[mask].copy()
                     
                     if not user_df.empty:
+                        # --- PENAMBAHAN 3: HIDE_INDEX=TRUE ---
                         if not is_premium:
                             st.warning("🔒 Akun Gratis hanya menampilkan 3 data terakhir.")
-                            st.dataframe(user_df.sort_values(by=user_df.columns[0], ascending=False).head(3), use_container_width=True)
+                            st.dataframe(user_df.sort_values(by=user_df.columns[0], ascending=False).head(3), use_container_width=True, hide_index=True)
                         else:
-                            st.dataframe(user_df.sort_values(by=user_df.columns[0], ascending=False), use_container_width=True)
+                            st.dataframe(user_df.sort_values(by=user_df.columns[0], ascending=False), use_container_width=True, hide_index=True)
+                            
+                            # --- PENAMBAHAN 2: TOMBOL DOWNLOAD (EKSLUSIF PREMIUM) ---
+                            csv = user_df.to_csv(index=False).encode('utf-8')
+                            st.download_button(
+                                label="📥 Download Jurnal Lo (CSV)",
+                                data=csv,
+                                file_name=f"jurnal_{user_email}.csv",
+                                mime="text/csv",
+                                key="btn_download_csv"
+                            )
                     else:
                         st.info(f"Belum ada data buat {user_email}.")
                 else:
-                    st.dataframe(df_full)
+                    st.dataframe(df_full, hide_index=True)
             else:
                 st.info("Sheets masih kosong.")
         except Exception as e:
