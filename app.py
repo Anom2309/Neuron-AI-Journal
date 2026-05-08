@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # 1. Konfigurasi Halaman & Tema
 st.set_page_config(page_title="Daily Workflow - Neuron AI", page_icon="🌱", layout="centered")
@@ -41,7 +41,7 @@ else:
     user_email = st.session_state['user_email']
     is_premium = False
     
-    # --- JURUS SAKTI KHUSUS OWNER (ADMIN BYPASS) ---
+    # --- JURUS SAKTI KHUSUS OWNER ---
     if user_email == "sedichachmad@gmail.com":
         is_premium = True
     else:
@@ -78,12 +78,12 @@ else:
             <div class='premium-card'>
                 <h3>🔒 Upgrade Neuron AI Premium</h3>
                 <p>Buka akses <b>Riwayat Tanpa Batas</b> dan <b>Grafik Mood Analytics</b>.</p>
-                <a href='https://wa.me/6282114982376?text=Halo+Achmad,+gw+mau+upgrade+Neuron+AI+buat+email+{user_email}' style='color: #1D3557; font-weight: bold; text-decoration: none; background: white; padding: 10px 20px; border-radius: 8px;'>Upgrade via WhatsApp</a>
+                <a href='https://wa.me/628XXXXXXXXXXX?text=Halo+Achmad,+gw+mau+upgrade+Neuron+AI+buat+email+{user_email}' style='color: #1D3557; font-weight: bold; text-decoration: none; background: white; padding: 10px 20px; border-radius: 8px;'>Upgrade via WhatsApp</a>
             </div>
         """, unsafe_allow_html=True)
     else:
-        msg = "Selamat Datang. Ruang fokus ini sudah siap menemanimu. Yuk, selaraskan pikiran dan wujudkan versi terbaik dirimu hari ini" if user_email == "sedichachmad@gmail.com" else "Selamat Datang. Ruang fokus ini sudah siap menemanimu. Yuk, selaraskan pikiran dan wujudkan versi terbaik dirimu hari ini"
-        st.markdown(f"<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"{msg} \"</div>", unsafe_allow_html=True)
+        msg = "Selamat datang kembali, Master!" if user_email == "sedichachmad@gmail.com" else "Mode Premium Aktif!"
+        st.markdown(f"<div class='nero-box'><b>^‿^ Nero bilang:</b><br>\"{msg} Yuk, kita sikat hari ini, Bro!\"</div>", unsafe_allow_html=True)
     
     # --- PANDUAN PENGGUNAAN ---
     with st.expander("📖 Panduan Penggunaan Neuron AI (Klik di sini)", expanded=False):
@@ -92,9 +92,9 @@ else:
         
         Ikuti 3 siklus harian ini:
         
-        * 🌅 **Tab Pagi (Persiapan):** Tuliskan **maksimal 3 prioritas paling penting** hari ini.
-        * 🚀 **Tab Siang (Eksekusi):** Tuliskan tugas-tugas repetitif yang bisa lo **delegasikan ke AI**.
-        * 🌙 **Tab Malam (Refleksi):** Tulis pencapaian hari ini dan evaluasi Mood lo, lalu klik **Simpan Jurnal**.
+        * 🌅 **Tab Pagi (Persiapan):** Jangan penuhi otak lo dengan banyak hal. Tuliskan **maksimal 3 prioritas paling penting** yang harus selesai hari ini.
+        * 🚀 **Tab Siang (Eksekusi):** Kerja cerdas, bukan cuma keras. Tuliskan progres nyata atau tugas utama yang sedang lo selesaikan hari ini.
+        * 🌙 **Tab Malam (Refleksi):** Sebelum tidur, tulis satu pencapaian yang bikin lo bangga hari ini sekecil apapun itu. Evaluasi tingkat kepuasan (Mood) lo, lalu klik **Simpan Jurnal Hari Ini**.
         
         *💡 Catatan: Cukup klik tombol Simpan SATU KALI di malam hari setelah semua tab terisi.*
         """)
@@ -103,15 +103,16 @@ else:
     
     with tab1:
         st.subheader("Top 3 Prioritas")
-        st.caption("Apa 3 hal terpenting hari ini?")
+        st.caption("Fokuskan pikiran. Apa 3 hal terpenting hari ini?")
         d1 = st.text_input("Prioritas 1", key="d1")
         d2 = st.text_input("Prioritas 2", key="d2")
         d3 = st.text_input("Prioritas 3", key="d3")
         
     with tab2:
-        st.subheader("Otomatisasi AI")
-        st.caption("Tugas apa yang bisa dikerjakan oleh AI hari ini?")
-        ai_tasks = st.text_area("Ide otomatisasi...", height=150, key="ai")
+        # --- PERUBAHAN TAB SIANG: FOKUS KE PRODUKTIVITAS USER ---
+        st.subheader("Progres & Eksekusi")
+        st.caption("Pertahankan ritmemu. Apa tindakan nyata yang sedang atau sudah kamu selesaikan siang ini?")
+        ai_tasks = st.text_area("Tulis progres atau tugas yang sedang kamu kerjakan...", height=150, key="ai")
         
     with tab3:
         st.subheader("Refleksi")
@@ -120,7 +121,6 @@ else:
         mood_val = st.slider("Mood & Energi (1: Drop - 5: On Fire)", 1, 5, 3, key="mood")
         
         if st.button("Simpan Jurnal Hari Ini", key="btn_save_jurnal"):
-            # --- PENAMBAHAN 1: VALIDASI FORM ---
             if not d1 or not achieve:
                 st.warning("⚠️ Bro, minimal isi Prioritas 1 dan Pencapaian hari ini dong sebelum disimpan!")
             else:
@@ -128,7 +128,7 @@ else:
                     "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "Email": user_email,
                     "Prioritas": f"{d1} | {d2} | {d3}",
-                    "AI_Tasks": ai_tasks,
+                    "AI_Tasks": ai_tasks, # Nama kolom DB tetap aman
                     "Pencapaian": achieve,
                     "Mood": mood_val,
                     "Status": "Premium" if is_premium else "Free"
@@ -158,14 +158,12 @@ else:
                     user_df = df_full[mask].copy()
                     
                     if not user_df.empty:
-                        # --- PENAMBAHAN 3: HIDE_INDEX=TRUE ---
                         if not is_premium:
                             st.warning("🔒 Akun Gratis hanya menampilkan 3 data terakhir.")
                             st.dataframe(user_df.sort_values(by=user_df.columns[0], ascending=False).head(3), use_container_width=True, hide_index=True)
                         else:
                             st.dataframe(user_df.sort_values(by=user_df.columns[0], ascending=False), use_container_width=True, hide_index=True)
                             
-                            # --- PENAMBAHAN 2: TOMBOL DOWNLOAD (EKSLUSIF PREMIUM) ---
                             csv = user_df.to_csv(index=False).encode('utf-8')
                             st.download_button(
                                 label="📥 Download Jurnal Lo (CSV)",
@@ -187,22 +185,50 @@ else:
         st.subheader("📊 Neuron Analytics")
         if is_premium:
             st.write("Tren produktivitas dan kepuasan (Flow State) lo:")
+            
+            # --- PERUBAHAN TAB ANALYTICS: FILTER WAKTU ---
+            filter_opt = st.selectbox(
+                "Pilih Rentang Waktu:", 
+                ["7 Hari Terakhir", "30 Hari Terakhir", "Tahun Ini", "Semua Data"]
+            )
+            
             try:
                 df_chart = conn.read(spreadsheet=SHEET_URL, worksheet="Sheet1", ttl=0)
                 col_em = [c for c in df_chart.columns if 'email' in str(c).lower()]
                 if col_em:
                     mask = df_chart[col_em[0]].astype(str).str.strip().str.lower() == user_email
                     user_data = df_chart[mask].copy()
+                    
                     if not user_data.empty:
                         col_mood = [c for c in user_data.columns if 'mood' in str(c).lower()]
                         col_time = [c for c in user_data.columns if 'timestamp' in str(c).lower()]
+                        
                         if col_mood and col_time:
-                            user_data[col_mood[0]] = pd.to_numeric(user_data[col_mood[0]], errors='coerce')
-                            chart_data = user_data.set_index(col_time[0])[col_mood[0]]
-                            st.line_chart(chart_data)
+                            # Ubah format waktu biar bisa dihitung
+                            user_data['TanggalAsli'] = pd.to_datetime(user_data[col_time[0]], errors='coerce')
+                            user_data = user_data.dropna(subset=['TanggalAsli'])
+                            
+                            now = datetime.now()
+                            if filter_opt == "7 Hari Terakhir":
+                                filtered_data = user_data[user_data['TanggalAsli'] >= (now - timedelta(days=7))]
+                            elif filter_opt == "30 Hari Terakhir":
+                                filtered_data = user_data[user_data['TanggalAsli'] >= (now - timedelta(days=30))]
+                            elif filter_opt == "Tahun Ini":
+                                filtered_data = user_data[user_data['TanggalAsli'].dt.year == now.year]
+                            else:
+                                filtered_data = user_data
+                            
+                            if not filtered_data.empty:
+                                filtered_data[col_mood[0]] = pd.to_numeric(filtered_data[col_mood[0]], errors='coerce')
+                                chart_data = filtered_data.set_index(col_time[0])[col_mood[0]]
+                                st.line_chart(chart_data)
+                            else:
+                                st.info(f"Belum ada data jurnal untuk rentang waktu: {filter_opt}.")
                         else:
                             st.info("Data belum cukup.")
+                    else:
+                        st.info("Belum ada data untuk dianalisis.")
             except Exception as e:
-                st.error("Gagal muat grafik.")
+                st.error(f"Gagal muat grafik: {repr(e)}")
         else:
             st.error("🔒 Fitur Analytics Terkunci. Upgrade ke Premium.")
